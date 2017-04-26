@@ -129,10 +129,7 @@ List<Link>* Glut::checkLines(Point &x, Point &y, Point &m, Point &n)
         for (size_t indexLine2 = 0; indexLine2 < line2.size; ++indexLine2)
         {
             if (equalCoord(line1[indexLine1], line2[indexLine2]))
-            {
-                Link *_link = new Link(line1[indexLine1], 0, 0);
-                result->push(*_link);
-            }
+                result->push(Link(line1[indexLine1], 0, 0));
         }
     }
     return result;
