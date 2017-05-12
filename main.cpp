@@ -1,3 +1,4 @@
+#include <bits/unique_ptr.h>
 #include "glut.h"
 
 void mouse(int, int, int, int);
@@ -45,17 +46,28 @@ void keyboard(unsigned char key, int x, int y) {
 
 void test()
 {
-    glut->push(Point(0, 0, colorArea), 0);
-    glut->push(Point(6 * C, 0, colorArea), 0);
-    glut->push(Point(6 * C, 6 * C, colorArea), 0);
-    glut->push(Point(0, 6 * C, colorArea), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(3, 2, colorArea)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(7, 2, colorArea)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(9, 5, colorArea)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(9, 9, colorArea)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(5, 10, colorArea)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(1, 6, colorArea)), 0);
 
     glut->changeState();
 
-    glut->push(Point(1 * C, 8 * C, colorBefore), 0);
-    glut->push(Point(8 * C, 1 * C, colorBefore), 0);
-    glut->push(Point(8 * C, 8 * C, colorBefore), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(6, 0, colorBefore)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(9, 2, colorBefore)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(9, 5, colorBefore)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(6, 4, colorBefore)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(4, 4, colorBefore)), 0);
+    glut->push(*std::unique_ptr<Point>(new Point(5, 2, colorBefore)), 0);
 
+    /*
+    glut->push(Point(4, 1, colorBefore), 0);
+    glut->push(Point(6, 1, colorBefore), 0);
+    glut->push(Point(6, 4, colorBefore), 0);
+    glut->push(Point(4, 4, colorBefore), 0);
+    */
     glut->changeState();
 }
 

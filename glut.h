@@ -19,46 +19,71 @@ public:
 
     void render();
 
-    void drawCell(Point,        bool save = true);
-    void drawLine(Point, Point, bool save = true);
+    void drawCell(const Point&,               bool save = true);
+    void drawLine(const Point&, const Point&, bool save = true);
     void clear();
 
     Point          pointsScreen        [W / C][H / C];
-    List<Point>    pointsPolygon       [2];
-    List<Point>    pointsArea          [2];
-    List<Point>    pointsCurPolygon    [2];
+    List<Point>    pointsPolygon;
+    List<Point>    pointsArea   ;
+    List<List<Point>>    pointsCurPolygon;
 
     //state = (точки == внешние) ? 0 : 1;
-    void push(Point, bool state);
+    void push(Point&, bool state);
 
     void changeState();
 
 private:
     void doAlgVA();
     void createListPointIntersection(List<Link>& links);
-    List<Link>* checkLines(Point &x, Point &y, Point &m, Point &n);
+    void findCurrentPoints(List<List<Point>>& pointsResult, List<Link>& pointsIntersection);
+    List<Link>* checkLines(const Point &x, const Point &y, const Point &m, const Point &n);
 
-    void getLine(Point, Point, List<Point>&);
+    void getLine(const Point&, const Point&, List<Point>&);
 
     void clearData();
 
     void drawOldPoints();
     void drawGrid();
-    void drawSomePolygon(List<Point>[2], Color);
+    void drawSomePolygon(const List<Point>, const Color&);
 
     template <class T> friend void swap(T&, T&);
-    inline unsigned int absolute(int);
+    inline unsigned int absolute(const int);
 
     char state;
     enum { AREA, POLYGON, RUN };
-    enum { OUTSIDE, INSIDE };
 };
 
 void Glut::doAlgVA()
 {
     List<Link> pointsIntersection;
     createListPointIntersection(pointsIntersection);
-    pointsIntersection;
+
+    List<List<Point>> pointsResult;
+    findCurrentPoints(pointsResult, pointsIntersection);
+    pointsResult;
+}
+
+void Glut::findCurrentPoints(List<List<Point>>& pointsResult, List<Link>& pointsIntersection)
+{
+    List<Point> somePartFinalPolygon;
+    size_t pos;
+    for (size_t index = 0; index < pointsIntersection.size; ++index)
+    {
+        Link linkCmp = (pointsIntersection.size == 1) ? pointsIntersection[0] : pointsIntersection[index + 1];
+        Point pointAdded = pointsIntersection[index];
+
+        pos = pointsIntersection[index].pos[POLYGON];
+        do {
+            somePartFinalPolygon.push(pointAdded);
+            pointAdded = pointsPolygon[++pos];
+        }
+        while (!equalCoord(pointAdded, linkCmp));
+
+//        pos = linkCmp.pos[AREA]
+
+        pointsResult.push(somePartFinalPolygon);
+    }
 }
 
 void Glut::createListPointIntersection(List<Link> &pointsIntersection)
@@ -67,60 +92,64 @@ void Glut::createListPointIntersection(List<Link> &pointsIntersection)
     Link *linkPtr = nullptr, *linkResultPtr = nullptr;
     size_t secondIndexArea, secondIndexPolygon;
     size_t incrementIndexArea = 0;
-    for (unsigned char state = OUTSIDE; state <= INSIDE; ++state)
-        for (size_t indexArea = 0; indexArea < pointsArea[state].size; ++indexArea)
+        for (size_t indexArea = 0; indexArea < pointsArea.size; ++indexArea)
         {
             if (incrementIndexArea)
             {
                 indexArea += incrementIndexArea;
                 incrementIndexArea = 0;
-                if (indexArea >= pointsArea[state].size) break;
+                if (indexArea >= pointsArea.size) break;
             }
-            secondIndexArea = (indexArea + 1 == pointsArea[state].size) ? 0 : indexArea + 1;
+            secondIndexArea = (indexArea + 1 == pointsArea.size) ? 0 : indexArea + 1;
             if (secondIndexArea == 0 && indexArea == 1) break;
 
-            for (size_t indexPolygon = 0; indexPolygon < pointsPolygon[state].size; ++indexPolygon)
+            for (size_t indexPolygon = 0; indexPolygon < pointsPolygon.size; ++indexPolygon)
             {
-                secondIndexPolygon = (indexPolygon + 1 == pointsPolygon[state].size) ? 0 : indexPolygon + 1;
+                secondIndexPolygon = (indexPolygon + 1 == pointsPolygon.size) ? 0 : indexPolygon + 1;
                 if (secondIndexPolygon == 0 && indexPolygon == 1) break;
 
-                tempList = checkLines(pointsArea[state][indexArea],
-                                      pointsArea[state][secondIndexArea],
-                                      pointsPolygon[state][indexPolygon],
-                                      pointsPolygon[state][secondIndexPolygon]);
+                tempList = checkLines(pointsArea[indexArea],
+                                      pointsArea[secondIndexArea],
+                                      pointsPolygon[indexPolygon],
+                                      pointsPolygon[secondIndexPolygon]);
                 for (size_t indexLinks = 0; indexLinks < tempList->size; ++indexLinks)
                 {
                     (*tempList)[indexLinks].pos[AREA] = secondIndexArea;
                     (*tempList)[indexLinks].pos[POLYGON] = secondIndexPolygon;
 
-                    pointsArea[state].insert((*tempList)[indexLinks], secondIndexArea);
-                    for (size_t indexCheck = secondIndexArea + 1; indexCheck < pointsArea[state].size; ++indexCheck)
-                        if ((linkPtr = dynamic_cast<Link*>(&pointsArea[state][indexCheck])))
+                    pointsArea.insert((*tempList)[indexLinks], secondIndexArea);
+                    for (size_t indexCheck = secondIndexArea + 1; indexCheck < pointsArea.size; ++indexCheck)
+                        if ((linkPtr = dynamic_cast<Link*>(&pointsArea[indexCheck])))
                         {
                             ++linkPtr->pos[AREA];
                             if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[AREA] = linkPtr->pos[AREA];
                         }
                     ++incrementIndexArea;
 
-                    pointsPolygon[state].insert((*tempList)[indexLinks], secondIndexPolygon);
-                    for (size_t indexCheck = secondIndexPolygon + 1; indexCheck < pointsPolygon[state].size; ++indexCheck)
-                        if ((linkPtr = dynamic_cast<Link*>(&pointsPolygon[state][indexCheck])))
+                    pointsPolygon.insert((*tempList)[indexLinks], secondIndexPolygon);
+                    for (size_t indexCheck = secondIndexPolygon + 1; indexCheck < pointsPolygon.size; ++indexCheck)
+                        if ((linkPtr = dynamic_cast<Link*>(&pointsPolygon[indexCheck])))
                         {
                             ++linkPtr->pos[POLYGON];
                             if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[POLYGON] = linkPtr->pos[POLYGON];
                         }
                     ++indexPolygon;
-
                 }
-                pointsIntersection += *tempList;
-                delete tempList;
+                if (tempList->size)
+                {
+                    pointsIntersection += *tempList;
+                    delete tempList;
+                    break;
+                }
+                else delete tempList;
             }
         }
 }
 
-List<Link>* Glut::checkLines(Point &x, Point &y, Point &m, Point &n)
+List<Link>* Glut::checkLines(const Point &x, const Point &y, const Point &m, const Point &n)
 {
     List<Link> *result = new List<Link>();
+    if (equalCoord(x, m) && equalCoord(y, n)) return result;
     List<Point> line1, line2;
     getLine(x, y, line1);
     getLine(m, n, line2);
@@ -140,17 +169,19 @@ void Glut::clear()
     clearData();
 }
 
-void Glut::push(Point p, bool state)
+void Glut::push(Point &p, bool state)
 {
+    p.x *= C;
+    p.y *= C;
     switch (this->state)
     {
         case AREA:
             p.color =    colorArea;
-            pointsArea   [state].push(p);
+            pointsArea   .push(p);
             break;
         case POLYGON:
             p.color =    colorBefore;
-            pointsPolygon[state].push(p);
+            pointsPolygon.push(p);
             break;
         default:
             break;
@@ -170,7 +201,7 @@ void Glut::changeState()
     }
 }
 
-void Glut::getLine(Point p1, Point p2, List<Point>& list)
+void Glut::getLine(const Point &p1, const Point &p2, List<Point>& list)
 {
     if (p1.x == p2.x && p1.y == p2.y) {
         if (p1.x != 0) list.push(p1);
@@ -213,20 +244,13 @@ void Glut::getLine(Point p1, Point p2, List<Point>& list)
     }
 }
 
-void Glut::drawSomePolygon(List<Point> lists[2], Color color)
+void Glut::drawSomePolygon(const List<Point> list, const Color &color)
 {
-    if (lists[OUTSIDE].size) {
+    if (list.size) {
         glBegin(GL_POLYGON);
         glColor3ub(color.r, color.g, color.b);
-        for (unsigned int i = 0; i < lists[OUTSIDE].size; ++i)
-            glVertex2i(lists[OUTSIDE][i].x * C, lists[OUTSIDE][i].y * C);
-        glEnd();
-    }
-    if (lists[INSIDE].size) {
-        glBegin(GL_POLYGON);
-        glColor3ub(colorField.r, colorField.g, colorField.b);
-        for (unsigned int i = 0; i < lists[INSIDE].size; ++i)
-            glVertex2i(lists[INSIDE][i].x * C, lists[INSIDE][i].y * C);
+        for (unsigned int i = 0; i < list.size; ++i)
+            glVertex2i(list[i].x * C, list[i].y * C);
         glEnd();
     }
 }
@@ -239,7 +263,8 @@ void Glut::render()
 
     drawSomePolygon(pointsArea, colorArea);
     drawSomePolygon(pointsPolygon, colorBefore);
-    drawSomePolygon(pointsCurPolygon, colorAfter);
+    for (size_t i = 0; i < pointsCurPolygon.size; ++i)
+        drawSomePolygon(pointsCurPolygon[i], colorAfter);
 
     if (C >= 8) drawGrid();
 
@@ -266,7 +291,7 @@ void Glut::drawGrid()
     glEnd();
 }
 
-unsigned int Glut::absolute(int a)
+unsigned int Glut::absolute(const int a)
 {
     return static_cast<unsigned int>((a < 0) ? -a : a);
 }
@@ -277,10 +302,8 @@ void Glut::clearData()
         for (int y = 0; y < H / C; ++y)
             pointsScreen[x][y] = {x, y, colorField };
 
-    pointsPolygon[ INSIDE].clear();
-    pointsPolygon[OUTSIDE].clear();
-    pointsArea   [ INSIDE].clear();
-    pointsArea   [OUTSIDE].clear();
+    pointsPolygon.clear();
+    pointsArea   .clear();
 
     state = AREA;
 }
@@ -293,7 +316,7 @@ void swap(T& t1, T& t2)
     t2 = temp;
 }
 
-void Glut::drawCell(Point p, bool save)
+void Glut::drawCell(const Point &p, bool save)
 {
     if (p.x >= 0 && p.x < (W / C) && p.y >= 0 && p.y < (H / C)) {
         if (save) pointsScreen[p.x][p.y].color = p.color;
@@ -307,7 +330,7 @@ void Glut::drawCell(Point p, bool save)
     }
 }
 
-void Glut::drawLine(Point p1, Point p2, bool save)
+void Glut::drawLine(const Point &p1, const Point &p2, bool save)
 {
     List<Point> list;
     getLine(p1, p2, list);

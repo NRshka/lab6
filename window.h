@@ -7,6 +7,6 @@
 
 const unsigned short W = 256*3;
 const unsigned short H = 256*2;
-const unsigned short C = 16;
+const unsigned short C = 1;
 
 #endif //LAB6_WINDOW_H

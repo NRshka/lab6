@@ -22,7 +22,8 @@ public:
 
     void clear();
 
-    node_t& operator[](size_t) const;
+    node_t& operator[](const size_t) const;
+    node_t& last() const;
 
     //последовательное добавление элементов
     template <class node_polymorphism_t>
@@ -41,7 +42,7 @@ template <class node_polymorphism_t>
 List<node_t>& List<node_t>::operator+(const List<node_polymorphism_t> &addedList)
 {
     for (size_t i = 0; i < addedList.size; ++i)
-        push(addedList[i]);
+        if (size == 0 || !equalCoord(this->last(), addedList[i])) push(addedList[i]);
     return *this;
 }
 
@@ -71,7 +72,7 @@ void List<node_t>::clear()
 }
 
 template <class node_t>
-node_t& List<node_t>::operator[](size_t index) const
+node_t& List<node_t>::operator[](const size_t index) const
 {
     if (index < size) {
         Node<node_t> *cur = first;
@@ -79,6 +80,14 @@ node_t& List<node_t>::operator[](size_t index) const
             cur = cur->next;
         return *cur->data;
     }
+    else throw;
+}
+
+template <class node_t>
+node_t& List<node_t>::last() const
+{
+    if (size)
+        return (*this)[size - 1];
     else throw;
 }
 
