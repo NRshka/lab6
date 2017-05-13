@@ -9,7 +9,10 @@ class Color
 public:
     unsigned char r, g, b;
 
-    Color(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r), g(_g), b(_b) {}
+    Color(  const unsigned char _r,
+            const unsigned char _g,
+            const unsigned char _b)
+            : r(_r), g(_g), b(_b) {}
     Color(const Color &c) : r(c.r), g(c.g), b(c.b) {}
 
     bool operator==(const Color &c) const { return (r == c.r) && (g == c.g) && (b == c.b); }

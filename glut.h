@@ -29,7 +29,7 @@ public:
     List<List<Point>>    pointsCurPolygon;
 
     //state = (точки == внешние) ? 0 : 1;
-    void push(Point&, bool state);
+    void push(Point&);
 
     void changeState();
 
@@ -102,7 +102,6 @@ void Glut::findCurrentPoints(List<List<Point>>& pointsResult, const List<Link>& 
 
         pointsResult.push(somePartFinalPolygon);
     }
-    if (somePartFinalPolygon.size) ;
 }
 
 void Glut::createListPointIntersection(List<Link> &pointsIntersection)
@@ -183,16 +182,14 @@ void Glut::clear()
     clearData();
 }
 
-void Glut::push(Point &p, bool state)
+void Glut::push(Point &p)
 {
     switch (this->state)
     {
         case AREA:
-            p.color =    colorArea;
             pointsArea   .push(p);
             break;
         case POLYGON:
-            p.color =    colorBefore;
             pointsPolygon.push(p);
             break;
         default:
@@ -239,7 +236,7 @@ void Glut::getLine(const Point &p1, const Point &p2, List<Point>& list)
     if (y1 < y0) coef = -1;
 
     for (x = x0; x <= x1; ++x) {
-        Point p = {x, y, p1.color};
+        Point p = {x, y};
         if (status) {
             p.y = x;
             p.x = y;
