@@ -16,6 +16,7 @@ public:
     List(const List&);
     ~List();
 
+
     template <class node_polymorphism_t> void push(const node_polymorphism_t&);
     template <class node_polymorphism_t> void insert(const node_polymorphism_t&, size_t index);
     template <class node_polymorphism_t> node_t* find(const node_polymorphism_t&) const;
@@ -32,10 +33,25 @@ public:
     template <class node_polymorphism_t>
     void operator+=(const List<node_polymorphism_t>& addedList);
 
+    template <class node_polymorphism_t>
+    List& operator=(const List<node_polymorphism_t>& newList);
+
     size_t size;
 private:
     Node<node_t>* first;
 };
+
+template <class node_t>
+template <class node_polymorphism_t>
+List<node_t>& List<node_t>::operator=(const List<node_polymorphism_t> &newList)
+{
+    if (this == &newList) return *this;
+
+    clear();
+    for (size_t i = 0; i < newList.size; ++i)
+        push(newList[i]);
+    return *this;
+}
 
 template <class node_t>
 template <class node_polymorphism_t>
@@ -78,7 +94,7 @@ node_t& List<node_t>::operator[](const size_t index) const
         Node<node_t> *cur = first;
         for (size_t i = 0; i < index; ++i)
             cur = cur->next;
-        return *cur->data;
+        return *(cur->data);
     }
     else throw;
 }
@@ -98,8 +114,13 @@ void List<node_t>::push(const node_polymorphism_t& node)
     if (first) {
         Node<node_t> *cur = first;
         while (cur->next) cur = cur->next;
-        cur->next = new Node<node_t>(new node_polymorphism_t(node), nullptr);
-    } else first = new Node<node_t>(new node_polymorphism_t(node), nullptr);
+        cur->next = new Node<node_t>(new node_polymorphism_t
+                                             (*std::unique_ptr<node_polymorphism_t>(new node_polymorphism_t(node))),
+                                     nullptr);
+    }
+    else first = new Node<node_t>(new node_polymorphism_t
+                                          (*std::unique_ptr<node_polymorphism_t>(new node_polymorphism_t(node))),
+                                  nullptr);
     ++size;
 }
 
@@ -134,26 +155,19 @@ void List<node_t>::insert(const node_polymorphism_t& node, size_t index)
             ++size;
         }
     }
+    else throw;
 }
 
 template <class node_t>
 List<node_t>::List()  : first(nullptr), size(0) {}
 
 template <class node_t>
-List<node_t>::List(const List &l)
+List<node_t>::List(const List &l) :
+    first(nullptr),
+    size(0)
 {
-    first = l.first;
-    if (first)
-    {
-        Node<node_t> *cur = first, *_cur = l.first;
-        while (_cur->next)
-        {
-            cur->next = _cur->next;
-            _cur = _cur->next;
-        }
-        cur->next = nullptr;
-    }
-    size = l.size;
+    for (size_t i = 0; i < l.size; ++i)
+        push(l[i]);
 }
 
 template <class node_t>

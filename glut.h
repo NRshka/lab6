@@ -36,7 +36,7 @@ public:
 private:
     void doAlgVA();
     void createListPointIntersection(List<Link>& links);
-    void findCurrentPoints(List<List<Point>>& pointsResult, List<Link>& pointsIntersection);
+    void findCurrentPoints(List<List<Point>>& pointsResult, const List<Link>& pointsIntersection);
     List<Link>* checkLines(const Point &x, const Point &y, const Point &m, const Point &n);
 
     void getLine(const Point&, const Point&, List<Point>&);
@@ -59,31 +59,50 @@ void Glut::doAlgVA()
     List<Link> pointsIntersection;
     createListPointIntersection(pointsIntersection);
 
-    List<List<Point>> pointsResult;
-    findCurrentPoints(pointsResult, pointsIntersection);
-    pointsResult;
+    findCurrentPoints(pointsCurPolygon, pointsIntersection);
 }
 
-void Glut::findCurrentPoints(List<List<Point>>& pointsResult, List<Link>& pointsIntersection)
+void Glut::findCurrentPoints(List<List<Point>>& pointsResult, const List<Link>& pointsIntersection)
 {
     List<Point> somePartFinalPolygon;
+    Point* pointAdded;
+    Point startPoint;
     size_t pos;
     for (size_t index = 0; index < pointsIntersection.size; ++index)
     {
-        Link linkCmp = (pointsIntersection.size == 1) ? pointsIntersection[0] : pointsIntersection[index + 1];
-        Point pointAdded = pointsIntersection[index];
+        Link linkCmp = (pointsIntersection.size == 1) ? pointsIntersection[0] :
+                       (index != pointsIntersection.size - 1) ? pointsIntersection[index + 1] :
+                       pointsIntersection[0];
+        pointAdded = &pointsIntersection[index];
+        startPoint = *pointAdded;
+        try {
+            do {
+                if (dynamic_cast<Link *>(pointAdded)->pos[POLYGON])
+                    pos = dynamic_cast<Link *>(pointAdded)->pos[POLYGON];
+                else throw 42;
 
-        pos = pointsIntersection[index].pos[POLYGON];
-        do {
-            somePartFinalPolygon.push(pointAdded);
-            pointAdded = pointsPolygon[++pos];
+                do {
+                    somePartFinalPolygon.push(*pointAdded);
+                    if (++pos == pointsPolygon.size) pos = 0;
+                    pointAdded = &pointsPolygon[pos];
+                } while (!dynamic_cast<Link *>(pointAdded));
+
+                if (dynamic_cast<Link *>(pointAdded)->pos[AREA])
+                    pos = dynamic_cast<Link *>(pointAdded)->pos[AREA];
+                else throw 42;
+
+                do {
+                    somePartFinalPolygon.push(*pointAdded);
+                    if (++pos == pointsArea.size) pos = 0;
+                    pointAdded = &pointsArea[pos];
+                } while (!dynamic_cast<Link *>(pointAdded));
+            } while (!equalCoord(startPoint, *pointAdded));
         }
-        while (!equalCoord(pointAdded, linkCmp));
-
-//        pos = linkCmp.pos[AREA]
+        catch (...) { break; }
 
         pointsResult.push(somePartFinalPolygon);
     }
+    if (somePartFinalPolygon.size) ;
 }
 
 void Glut::createListPointIntersection(List<Link> &pointsIntersection)
@@ -92,58 +111,53 @@ void Glut::createListPointIntersection(List<Link> &pointsIntersection)
     Link *linkPtr = nullptr, *linkResultPtr = nullptr;
     size_t secondIndexArea, secondIndexPolygon;
     size_t incrementIndexArea = 0;
-        for (size_t indexArea = 0; indexArea < pointsArea.size; ++indexArea)
+    for (size_t indexArea = 0; indexArea < pointsArea.size; ++indexArea)
+    {
+        if (incrementIndexArea)
         {
-            if (incrementIndexArea)
-            {
-                indexArea += incrementIndexArea;
-                incrementIndexArea = 0;
-                if (indexArea >= pointsArea.size) break;
-            }
-            secondIndexArea = (indexArea + 1 == pointsArea.size) ? 0 : indexArea + 1;
-            if (secondIndexArea == 0 && indexArea == 1) break;
-
-            for (size_t indexPolygon = 0; indexPolygon < pointsPolygon.size; ++indexPolygon)
-            {
-                secondIndexPolygon = (indexPolygon + 1 == pointsPolygon.size) ? 0 : indexPolygon + 1;
-                if (secondIndexPolygon == 0 && indexPolygon == 1) break;
-
-                tempList = checkLines(pointsArea[indexArea],
-                                      pointsArea[secondIndexArea],
-                                      pointsPolygon[indexPolygon],
-                                      pointsPolygon[secondIndexPolygon]);
-                for (size_t indexLinks = 0; indexLinks < tempList->size; ++indexLinks)
-                {
-                    (*tempList)[indexLinks].pos[AREA] = secondIndexArea;
-                    (*tempList)[indexLinks].pos[POLYGON] = secondIndexPolygon;
-
-                    pointsArea.insert((*tempList)[indexLinks], secondIndexArea);
-                    for (size_t indexCheck = secondIndexArea + 1; indexCheck < pointsArea.size; ++indexCheck)
-                        if ((linkPtr = dynamic_cast<Link*>(&pointsArea[indexCheck])))
-                        {
-                            ++linkPtr->pos[AREA];
-                            if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[AREA] = linkPtr->pos[AREA];
-                        }
-                    ++incrementIndexArea;
-
-                    pointsPolygon.insert((*tempList)[indexLinks], secondIndexPolygon);
-                    for (size_t indexCheck = secondIndexPolygon + 1; indexCheck < pointsPolygon.size; ++indexCheck)
-                        if ((linkPtr = dynamic_cast<Link*>(&pointsPolygon[indexCheck])))
-                        {
-                            ++linkPtr->pos[POLYGON];
-                            if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[POLYGON] = linkPtr->pos[POLYGON];
-                        }
-                    ++indexPolygon;
-                }
-                if (tempList->size)
-                {
-                    pointsIntersection += *tempList;
-                    delete tempList;
-                    break;
-                }
-                else delete tempList;
-            }
+            indexArea += incrementIndexArea;
+            incrementIndexArea = 0;
+            if (indexArea >= pointsArea.size) break;
         }
+        secondIndexArea = (indexArea + 1 == pointsArea.size) ? 0 : indexArea + 1;
+        if (secondIndexArea == 0 && indexArea == 1) break;
+
+        for (size_t indexPolygon = 0; indexPolygon < pointsPolygon.size; ++indexPolygon)
+        {
+            secondIndexPolygon = (indexPolygon + 1 == pointsPolygon.size) ? 0 : indexPolygon + 1;
+            if (secondIndexPolygon == 0 && indexPolygon == 1) break;
+
+            tempList = checkLines(pointsArea[indexArea],
+                                  pointsArea[secondIndexArea],
+                                  pointsPolygon[indexPolygon],
+                                  pointsPolygon[secondIndexPolygon]);
+            for (size_t indexLinks = 0; indexLinks < tempList->size; ++indexLinks)
+            {
+                (*tempList)[indexLinks].pos[AREA] = secondIndexArea;
+                (*tempList)[indexLinks].pos[POLYGON] = secondIndexPolygon;
+
+                pointsArea.insert((*tempList)[indexLinks], secondIndexArea);
+                for (size_t indexCheck = secondIndexArea + 1; indexCheck < pointsArea.size; ++indexCheck)
+                    if ((linkPtr = dynamic_cast<Link*>(&pointsArea[indexCheck])))
+                    {
+                        ++linkPtr->pos[AREA];
+                        if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[AREA] = linkPtr->pos[AREA];
+                    }
+                ++incrementIndexArea;
+
+                pointsPolygon.insert((*tempList)[indexLinks], secondIndexPolygon);
+                for (size_t indexCheck = secondIndexPolygon + 1; indexCheck < pointsPolygon.size; ++indexCheck)
+                    if ((linkPtr = dynamic_cast<Link*>(&pointsPolygon[indexCheck])))
+                    {
+                        ++linkPtr->pos[POLYGON];
+                        if ((linkResultPtr = pointsIntersection.find(*linkPtr))) linkResultPtr->pos[POLYGON] = linkPtr->pos[POLYGON];
+                    }
+                ++indexPolygon;
+            }
+            pointsIntersection += *tempList;
+            delete tempList;
+        }
+    }
 }
 
 List<Link>* Glut::checkLines(const Point &x, const Point &y, const Point &m, const Point &n)
@@ -171,8 +185,6 @@ void Glut::clear()
 
 void Glut::push(Point &p, bool state)
 {
-    p.x *= C;
-    p.y *= C;
     switch (this->state)
     {
         case AREA:
@@ -194,10 +206,7 @@ void Glut::changeState()
     if (++state == RUN)
     {
         doAlgVA();
-        glutPostRedisplay();
-
         state = 0;
-        clearData();
     }
 }
 

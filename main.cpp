@@ -46,28 +46,28 @@ void keyboard(unsigned char key, int x, int y) {
 
 void test()
 {
-    glut->push(*std::unique_ptr<Point>(new Point(3, 2, colorArea)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(7, 2, colorArea)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(9, 5, colorArea)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(9, 9, colorArea)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(5, 10, colorArea)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(1, 6, colorArea)), 0);
+//    List<List<int>> *l = new List<List<int>>();
+//    List<int> *tempList = new List<int>();
+//    int tempInt = 2;
+//    tempList->push(tempInt);
+//    tempList->push(tempInt + 1);
+//    tempList->push(tempInt + 2);
+//    l->push(*tempList);
+//    delete tempList;
+//    delete l;
+
+    glut->push(*(std::unique_ptr<Point>(new Point(3, 3, colorArea))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(8, 3, colorArea))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(8, 8, colorArea))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(3, 8, colorArea))), 0);
 
     glut->changeState();
 
-    glut->push(*std::unique_ptr<Point>(new Point(6, 0, colorBefore)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(9, 2, colorBefore)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(9, 5, colorBefore)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(6, 4, colorBefore)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(4, 4, colorBefore)), 0);
-    glut->push(*std::unique_ptr<Point>(new Point(5, 2, colorBefore)), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(4, 2, colorBefore))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(10, 2, colorBefore))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(10, 5, colorBefore))), 0);
+    glut->push(*(std::unique_ptr<Point>(new Point(4, 5, colorBefore))), 0);
 
-    /*
-    glut->push(Point(4, 1, colorBefore), 0);
-    glut->push(Point(6, 1, colorBefore), 0);
-    glut->push(Point(6, 4, colorBefore), 0);
-    glut->push(Point(4, 4, colorBefore), 0);
-    */
     glut->changeState();
 }
 

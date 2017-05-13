@@ -30,8 +30,8 @@ public:
 };
 
 static const Color colorField   = { 0xff, 0xff, 0xff};
-static const Color colorArea = { 0xa8, 0x54, 0xfc};
-static const Color colorBefore  = { 0xa8, 0xd2, 0xfc};
+static const Color colorArea    = { 0xa8, 0xd2, 0x0c};
+static const Color colorBefore  = { 0xa8, 0x54, 0xfc};
 static const Color colorAfter   = { 0x2a, 0x54, 0x7e};
 
 #endif //LAB6_COLOR_H
